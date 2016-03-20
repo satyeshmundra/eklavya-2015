@@ -6,15 +6,22 @@ sensor_msgs::NavSatFix msg;
 sensor_msgs::NavSatFix origin,temp;
 ros::Publisher gps_pub;
 ros::Publisher origin_pub;
-volatile int i=0;
+//#define N 100
+//volatile int i=0;
   //ros::Time current_time;
   //ros::Time last_time;
 
   
 void odomCallback(sensor_msgs::NavSatFix msg)
 {
+  static int i = 0;
 	if (ros::ok())
-{
+  {
+
+    msg.position_covariance_type = 2;
+    msg.position_covariance=boost::assign::list_of(1.0)(0.0)(0.0)
+                                                  (0.0)(1.0)(0.0)
+                                                  (0.0)(0.0)(1.0);
     if(i<100)
     {
       i++;
@@ -24,22 +31,23 @@ void odomCallback(sensor_msgs::NavSatFix msg)
     if(i==100)
     {
       i++;
-      origin.latitude=temp.latitude/100;
-      origin.longitude=temp.longitude/100;
+      msg.latitude=temp.latitude/100;
+      msg.longitude=temp.longitude/100;
+      origin.latitude = msg.latitude;
+      origin.longitude = msg.longitude;
+      gps_pub.publish(msg);
      }
     //add covariance
-    msg.position_covariance_type=2;
-    msg.position_covariance=boost::assign::list_of(1.0)(0.0)(0.0)
-                                                  (0.0)(1.0)(0.0)
-                                                  (0.0)(0.0)(1.0);
+    
                                                
 
         //publish the message
+    if(i>100)
+    {
+      gps_pub.publish(msg);
 
-    msg.header.frame_id="gps";
-                                                  
-    gps_pub.publish(msg);
-    origin_pub.publish(origin);
+      origin_pub.publish(origin);
+    }
     //last_time = current_time;
 
     
